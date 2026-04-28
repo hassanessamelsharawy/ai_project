@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 train_df = pd.read_csv("train_data.csv")
 test_df = pd.read_csv("test_data.csv")
 t_df = train_df.copy()
-t_test = test_df.copy()
+t_test = test_df.copy()// علشان مانبوظش الداتا نفسها 
 
 # delete unused column
 t_df = t_df.drop(columns=["Loan_ID"])
