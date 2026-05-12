@@ -1,8 +1,8 @@
-
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
@@ -156,7 +156,6 @@ x_train, x_val, y_train, y_val = train_test_split(
     random_state=42,
     stratify=y
 )
-# اوقات pandas بتاخد view not copy 
 x_train = x_train.copy()
 x_val = x_val.copy()
 
@@ -180,10 +179,10 @@ median_term = x_train["Loan_Amount_Term"].median()
 x_train["Loan_Amount_Term"] = x_train["Loan_Amount_Term"].fillna(median_term)
 x_val["Loan_Amount_Term"] = x_val["Loan_Amount_Term"].fillna(median_term)
 
-median_term = x_train["LoanAmount"].median()
-x_train["LoanAmount"] = x_train["LoanAmount"].fillna(median_term)
-x_val["LoanAmount"] = x_val["LoanAmount"].fillna(median_term)
-x_test["LoanAmount"] = x_test["LoanAmount"].fillna(median_term)
+median_loan = x_train["LoanAmount"].median()
+x_train["LoanAmount"] = x_train["LoanAmount"].fillna(median_loan)
+x_val["LoanAmount"] = x_val["LoanAmount"].fillna(median_loan)
+x_test["LoanAmount"] = x_test["LoanAmount"].fillna(median_loan)
 
 
 # Replace null values with the mode
@@ -194,32 +193,20 @@ for col in ["Self_Employed", "Gender", "Dependents", "Credit_History"]:
     x_val[col] = x_val[col].fillna(mode_vals[col])
 
 # to cap and delete outliers
-cols_dif_big = ["CoapplicantIncome", "ApplicantIncome"]
-cols_dif_small = ["Loan_Amount_Term", "LoanAmount"]
+all_cols = ["CoapplicantIncome", "ApplicantIncome",
+            "Loan_Amount_Term", "LoanAmount"]
 
-# cap
-bounds_small = {}
-for col in cols_dif_small:
+for col in all_cols:
     Q1 = x_train[col].quantile(0.25)
     Q3 = x_train[col].quantile(0.75)
     IQR = Q3 - Q1
+
     lower = Q1 - 1.5 * IQR
     upper = Q3 + 1.5 * IQR
-    bounds_small[col] = (lower, upper)
+
     x_train[col] = x_train[col].clip(lower, upper)
     x_val[col] = x_val[col].clip(lower, upper)
 
-# delete
-mask = pd.Series(True, index=x_train.index)
-for col in cols_dif_big:
-    Q1 = x_train[col].quantile(0.25)
-    Q3 = x_train[col].quantile(0.75)
-    IQR = Q3 - Q1
-    lower = Q1 - 1.5 * IQR
-    upper = Q3 + 1.5 * IQR
-    mask &= (x_train[col] >= lower) & (x_train[col] <= upper)
-
-x_train = x_train[mask]
 y_train = y_train.loc[x_train.index]
 
 # Replace null values in test with the mean of training
@@ -248,6 +235,10 @@ x_test = x_test.reindex(columns=x_train.columns, fill_value=0)
 # check
 print(x_train.isnull().sum())
 print(x_test.isnull().sum())
+
+
+
+
 
 # scale features to mean=0, std=1
 scaler = StandardScaler()
@@ -331,6 +322,31 @@ DT_model = DecisionTreeClassifier(criterion='gini', max_depth=best_max_depth, mi
 DT_model.fit(x_train, y_train)
 DT_df = pd.DataFrame(DT_results)
 
+
+# --- random forest ---
+
+RDF_results = []
+n_trees=[50,100,200,300,400,500,700,1000]
+best_depth=None
+best_n_tree=None
+best_RDF_score=-1
+for i in n_trees:
+    for j in max_depth_values:
+        RDF_model=RandomForestClassifier(n_estimators=i, max_depth=j, random_state=0)
+        RDF_model.fit(x_train, y_train)
+        y_pred = RDF_model.predict(x_val)
+        RDF_score = f1_score(y_val, y_pred)
+        RDF_results.append({"n_estimators": i, "max_depth": j, "f1": RDF_score})
+        if RDF_score > best_RDF_score:
+            best_RDF_score=RDF_score
+            best_depth=j
+            best_n_tree=i
+
+RDF_model = RandomForestClassifier(n_estimators=best_n_tree, max_depth=best_depth, random_state=0)
+RDF_model.fit(x_train, y_train)
+RDF_df = pd.DataFrame(RDF_results)
+
+
 # ============================================================
 # EVALUATION
 # ============================================================
@@ -368,30 +384,44 @@ print('Confusion Matrix :')
 print(confusion_matrix(y_test, yp_DT))
 print('-------------------------------------------------------------')
 
+# Random Forest
+print('Random Forest')
+print('Accuracy: ' + str(RDF_model.score(x_test, y_test) * 100) + '%')
+yp_RDF = RDF_model.predict(x_test)
+print("F1 Score: " + str(f1_score(y_test, yp_RDF) * 100) + "%")
+print("Precision: " + str(precision_score(y_test, yp_RDF) * 100) + "%")
+print("Recall: " + str(recall_score(y_test, yp_RDF) * 100) + "%")
+print('Confusion Matrix:')
+print(confusion_matrix(y_test, yp_RDF))
+
 # ============================================================
 # MODEL COMPARISON VISUALIZATION
 # ============================================================
 
-models = ['Logistic Regression', 'SVM', 'Decision Tree']
+models = ['Logistic Regression', 'SVM', 'Decision Tree','Random Forest']
 accuracies = [
     log_model.score(x_test, y_test) * 100,
     svm_model.score(x_test, y_test) * 100,
-    DT_model.score(x_test, y_test) * 100
+    DT_model.score(x_test, y_test) * 100,
+RDF_model.score(x_test, y_test) * 100
 ]
 f1_scores = [
     f1_score(y_test, yp_log) * 100,
     f1_score(y_test, yp_SVM) * 100,
-    f1_score(y_test, yp_DT) * 100
+    f1_score(y_test, yp_DT) * 100,
+f1_score(y_test, yp_RDF) * 100
 ]
 precisions = [
     precision_score(y_test, yp_log) * 100,
     precision_score(y_test, yp_SVM) * 100,
-    precision_score(y_test, yp_DT) * 100
+    precision_score(y_test, yp_DT) * 100,
+precision_score(y_test, yp_RDF) * 100
 ]
 recalls = [
     recall_score(y_test, yp_log) * 100,
     recall_score(y_test, yp_SVM) * 100,
-    recall_score(y_test, yp_DT) * 100
+    recall_score(y_test, yp_DT) * 100,
+recall_score(y_test, yp_RDF) * 100
 ]
 
 x = np.arange(len(models))
