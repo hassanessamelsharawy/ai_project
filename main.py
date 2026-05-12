@@ -395,7 +395,7 @@ recalls = [
 
 x = np.arange(len(models))
 width = 0.2
-6
+
 fig, ax = plt.subplots(figsize=(12, 6))
 ax.bar(x - 1.5*width, accuracies, width, label='Accuracy', color='steelblue')
 ax.bar(x - 0.5*width, f1_scores,  width, label='F1 Score',  color='salmon')
