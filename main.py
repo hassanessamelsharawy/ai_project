@@ -180,7 +180,7 @@ median_term = x_train["Loan_Amount_Term"].median()
 x_train["Loan_Amount_Term"] = x_train["Loan_Amount_Term"].fillna(median_term)
 x_val["Loan_Amount_Term"] = x_val["Loan_Amount_Term"].fillna(median_term)
 
-mean_loan = x_train["LoanAmount"].mean()
+median_term = x_train["LoanAmount"].median()
 x_train["LoanAmount"] = x_train["LoanAmount"].fillna(median_term)
 x_val["LoanAmount"] = x_val["LoanAmount"].fillna(median_term)
 x_test["LoanAmount"] = x_test["LoanAmount"].fillna(median_term)
