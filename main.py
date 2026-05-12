@@ -204,7 +204,7 @@ for col in cols_dif_big:
     mask &= (x_train[col] >= lower) & (x_train[col] <= upper)
 
 x_train = x_train[mask]
-y_train = y_train[mask]
+y_train = y_train.loc[x_train.index] 
 
 # Replace null values in test with the mean of training
 x_test["Loan_Amount_Term"] = x_test["Loan_Amount_Term"].fillna(mean_term)
