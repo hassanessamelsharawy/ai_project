@@ -176,7 +176,7 @@ print(x_train.isnull().sum())
 
 
 # Replace null values with the mean
-median_term = x_train["Loan_Amount_Term"].mean()
+median_term = x_train["Loan_Amount_Term"].median()
 x_train["Loan_Amount_Term"] = x_train["Loan_Amount_Term"].fillna(median_term)
 x_val["Loan_Amount_Term"] = x_val["Loan_Amount_Term"].fillna(median_term)
 
