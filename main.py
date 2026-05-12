@@ -1,3 +1,4 @@
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -9,6 +10,8 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, precision_score, recall_score
 from sklearn.metrics import f1_score
+import warnings
+warnings.filterwarnings('ignore')
 
 train_df = pd.read_csv("train_data.csv")
 test_df = pd.read_csv("test_data.csv")
@@ -160,15 +163,27 @@ x_val = x_val.copy()
 print(x_train.duplicated().sum())
 print(x_train.isnull().sum())
 
+# # Replace null values with the mean
+# mean_term = x_train["Loan_Amount_Term"].mean()
+# x_train["Loan_Amount_Term"] = x_train["Loan_Amount_Term"].fillna(mean_term)
+# x_val["Loan_Amount_Term"] = x_val["Loan_Amount_Term"].fillna(mean_term)
+#
+# mean_loan = x_train["LoanAmount"].mean()
+# x_train["LoanAmount"] = x_train["LoanAmount"].fillna(mean_loan)
+# x_val["LoanAmount"] = x_val["LoanAmount"].fillna(mean_loan)
+# x_test["LoanAmount"] = x_test["LoanAmount"].fillna(mean_loan)
+
+
 # Replace null values with the mean
-mean_term = x_train["Loan_Amount_Term"].mean()
-x_train["Loan_Amount_Term"] = x_train["Loan_Amount_Term"].fillna(mean_term)
-x_val["Loan_Amount_Term"] = x_val["Loan_Amount_Term"].fillna(mean_term)
+median_term = x_train["Loan_Amount_Term"].mean()
+x_train["Loan_Amount_Term"] = x_train["Loan_Amount_Term"].fillna(median_term)
+x_val["Loan_Amount_Term"] = x_val["Loan_Amount_Term"].fillna(median_term)
 
 mean_loan = x_train["LoanAmount"].mean()
-x_train["LoanAmount"] = x_train["LoanAmount"].fillna(mean_loan)
-x_val["LoanAmount"] = x_val["LoanAmount"].fillna(mean_loan)
-x_test["LoanAmount"] = x_test["LoanAmount"].fillna(mean_loan)
+x_train["LoanAmount"] = x_train["LoanAmount"].fillna(median_term)
+x_val["LoanAmount"] = x_val["LoanAmount"].fillna(median_term)
+x_test["LoanAmount"] = x_test["LoanAmount"].fillna(median_term)
+
 
 # Replace null values with the mode
 mode_vals = {}
@@ -204,10 +219,10 @@ for col in cols_dif_big:
     mask &= (x_train[col] >= lower) & (x_train[col] <= upper)
 
 x_train = x_train[mask]
-y_train = y_train.loc[x_train.index] 
+y_train = y_train.loc[x_train.index]
 
 # Replace null values in test with the mean of training
-x_test["Loan_Amount_Term"] = x_test["Loan_Amount_Term"].fillna(mean_term)
+x_test["Loan_Amount_Term"] = x_test["Loan_Amount_Term"].fillna(median_term)
 
 # Replace null values in test with the mode of training
 for col in ["Self_Employed", "Gender", "Dependents", "Credit_History"]:
@@ -380,7 +395,7 @@ recalls = [
 
 x = np.arange(len(models))
 width = 0.2
-
+6
 fig, ax = plt.subplots(figsize=(12, 6))
 ax.bar(x - 1.5*width, accuracies, width, label='Accuracy', color='steelblue')
 ax.bar(x - 0.5*width, f1_scores,  width, label='F1 Score',  color='salmon')
@@ -397,3 +412,8 @@ ax.set_ylim(0, 110)
 plt.tight_layout()
 plt.savefig("model_comparison.png")
 plt.show()
+# print(log_df)
+# print('-------------------------------------------------------------')
+# print(SVM_df)
+# print('-------------------------------------------------------------')
+# print(DT_df)
