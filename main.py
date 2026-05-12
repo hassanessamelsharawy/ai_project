@@ -156,6 +156,7 @@ x_train, x_val, y_train, y_val = train_test_split(
     random_state=42,
     stratify=y
 )
+# اوقات pandas بتاخد view not copy 
 x_train = x_train.copy()
 x_val = x_val.copy()
 
