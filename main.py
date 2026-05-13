@@ -206,8 +206,23 @@ for col in all_cols:
 
     x_train[col] = x_train[col].clip(lower, upper)
     x_val[col] = x_val[col].clip(lower, upper)
+    x_test[col] = x_test[col].clip(lower, upper)
 
 y_train = y_train.loc[x_train.index]
+# # to cap and delete outliers
+# cols_dif_big = ["CoapplicantIncome", "ApplicantIncome"]
+# cols_dif_small = ["Loan_Amount_Term", "LoanAmount"]
+
+# # Replace null values with the mean
+# mean_term = x_train["Loan_Amount_Term"].mean()
+# x_train["Loan_Amount_Term"] = x_train["Loan_Amount_Term"].fillna(mean_term)
+# x_val["Loan_Amount_Term"] = x_val["Loan_Amount_Term"].fillna(mean_term)
+#
+# mean_loan = x_train["LoanAmount"].mean()
+# x_train["LoanAmount"] = x_train["LoanAmount"].fillna(mean_loan)
+# x_val["LoanAmount"] = x_val["LoanAmount"].fillna(mean_loan)
+# x_test["LoanAmount"] = x_test["LoanAmount"].fillna(mean_loan)
+# x_train = x_train[mask]
 
 # Replace null values in test with the mean of training
 x_test["Loan_Amount_Term"] = x_test["Loan_Amount_Term"].fillna(median_term)
@@ -235,10 +250,6 @@ x_test = x_test.reindex(columns=x_train.columns, fill_value=0)
 # check
 print(x_train.isnull().sum())
 print(x_test.isnull().sum())
-
-
-
-
 
 # scale features to mean=0, std=1
 scaler = StandardScaler()
@@ -448,3 +459,5 @@ plt.show()
 # print(SVM_df)
 # print('-------------------------------------------------------------')
 # print(DT_df)
+#print('-------------------------------------------------------------')
+#print(RDF_df)
